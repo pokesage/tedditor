@@ -1,6 +1,8 @@
 #include <unistd.h>
 #include <termios.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <stdio.h>
 
 struct termios termios_orig;
 
@@ -13,8 +15,8 @@ void enableRawMode() {
     atexit(disableRawMode);
     
     struct termios raw = termios_orig;
-    raw.c_lflag &= ~(ECHO);
-    
+    raw.c_lflag &= ~(ECHO | ICANON);
+
     tcsetattr(STDERR_FILENO, TCSAFLUSH, &raw);
 }
 
@@ -24,6 +26,12 @@ int main() {
     // comes from unistd.h we're asking to read one byte
     // from the standard input into the variable c, loop
     // until there are no more bytes left to read
-    while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q');
+    while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q') {
+        if (iscntrl(c)) {
+            printf("%d\n", c);
+        } else {
+            printf("%d ('%c')\n", c, c);
+        }
+    }
     return 0;
 }
